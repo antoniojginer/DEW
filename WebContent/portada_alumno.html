@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang= "es-es">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Bienvenido a NotasOnLine</title>
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script>
+            function getAsignaturas(){
+            	$.ajax({
+            		url:"/nol1920/log_alu",
+            		type:"POST",
+            		data:"",
+            		success: function(data){
+            			if(data=="Exito") resto();
+            			else {alert("Usted no es un alumno"); window.location="/nol1920"}
+            		}
+            	});            	
+            }
+				
+            function resto(){
+            	$.ajax({
+            		url:"/nol1920/getInfoAlumno",
+            		type:"POST",
+            		data:'',
+            		dataType:"json",
+            		success: function(data){
+            			if(data.sesion=="cerrada"){
+            				alert("Debe iniciar sesión.");
+                    		window.location = "index.html";
+                    		return;
+                    	}
+            			res = data.apellidos + ", " + data.nombre;
+            			$.getJSON("/nol1920/getFoto")
+            			.done(function(response) {
+            				$("#foto").attr("src", "data:image/png;base64," + response.img);
+            			})
+            			.fail(function (jqxhr, textStatus, error) {
+            				var err = jqxhr.response.replace(",", "\n");
+            				alert("Algo mal: " + error);
+            			});
+            			$("#infoAlu").html("<h1>DNI: " +  data.dni + "</h1>");
+            			$("#infoAlu").append("<h1>Apellidos: " +  data.apellidos + "</h1>");
+            			$("#infoAlu").append("<h1>Nombre: " +  data.nombre + "</h1>");
+            			
+            		},
+            		error: function(error, s){}
+            	});                	
+            	
+                $.ajax({
+                    url:"/nol1920/getAsignaturas",
+                    type:"POST",
+                    data:"",
+                    dataType:"json",
+                    success: function(data){
+                    	if(data.sesion=="cerrada"){
+                    		return;
+                    	}
+                        var arrayNotas = [];
+                        var nota;
+                        $.each(data, function(key, value){
+                            if(value.nota=="") nota=0;
+                            else nota=value.nota;
+                            var asig = value.asignatura;
+                            var asignatura = "<a href=\"javascript:void getInfoAsig(\'"+asig+"\')\">" + asig + "</a>";
+                            $("#tabla").append("<tr><td>" + asignatura + "</td><td>" + nota + "</td></tr>");
+                            arrayNotas.push(parseFloat(nota));
+                        });
+                        calcularNotaMedia(arrayNotas);
+                    },
+                    error: function(error, s){}
+                });
+            }
+            
+            function getInfoAsig(asig){
+            	var asignatura = String(asig);
+            	
+            	$.ajax({
+            		url: "/nol1920/getInfoAsig",
+            		type:"POST",
+            		data:'asig='+asignatura,
+            		dataType:"json",
+            		success: function(data){
+            			$("#inf").hide();
+            			$("#titulo").html("<h4>Informaci&oacute;n de la asignatura "+data.acronimo+"</h4>");
+            			res = data.apellidos + ", " + data.nombre;            			
+            			$("#infoAsig").html("<p>Nombre: " +  data.nombre + "</p>");
+            			$("#infoAsig").append("<p>Cr&eacute;ditos: " +  data.creditos + "</p>");
+            			$("#infoAsig").append("<p>Cuatrimestre: " +  data.cuatrimestre + "</p>");
+            			$("#infoAsig").append("<p>Curso: " +  data.curso + "</p>");
+            		},
+            		error: function(error, s){}
+            	});
+            	
+            	$.ajax({
+            		url: "/nol1920/getInfoAsig?asig=" + asignatura,
+            		type: "GET",
+            		dataType:"json",
+            		success: function(data){
+            			$("#profesores").html("<h5>Profesores que imparten la asignatura:</h5>");
+            			$("#infoPro").empty();
+            			$.each(data, function(key, value){
+            				$("#infoPro").append("<p>" + value.apellidos + ", " + value.nombre + "</p>");
+            			});
+            		}
+            	});
+            }
+            
+            function calcularNotaMedia(notas){
+            	var total = 0;
+            	var indices = 0;
+            	notas.forEach(function(nota, indice, array) {
+            		total+=nota;
+            		indices = indice;
+            	});
+            	var notaMedia = total/(indices + 1);
+            	notaMedia = notaMedia.toFixed(3);
+            	$("#notaMedia").html("<p>Su nota media es: " + notaMedia + "</p>");
+            }
+            
+            function cerrarSesion(){        
+            	if(confirm("¿Está seguro/a de que quiere cerrar sesión?")){
+            		$.ajax({
+                		url:"/nol1920/finalizarSesion",
+                		type:"GET",
+                		dataType: "json",
+                		success: function(data) {
+                			if(data.code == "200"){window.location = "/nol1920";}
+                		}
+                	});
+            	}
+            	
+            }
+        </script>
+    </head>
+<body onload="getAsignaturas()">
+	<div id="todo" class="w-100 lead">
+		<div id="head" class="w-100">
+				<div id="fotoAlu" style="float:left; margin:25px;"><img src="default" alt="foto del alumno" id="foto" width="250"/></div>
+		    	<div id="infoAlu" style="float:left; margin:25px;"></div>
+		    	<div id="salir" style="float:right; margin:15px;">
+	    			<a href="javascript:void cerrarSesion()"> <img src="fotos/cerrar-sesion.png" alt="Cerrar sesi&oacute;n" width="30" /> </a>
+	    		</div>
+	   	</div>
+	   	
+	   	<div id="abajo">
+	   		<div class="w-100"><hr /></div>
+	   		<div id="asignaturas" class="w-50" style="float:left;">
+	   			<div style=" margin-left:20px;">
+		   			<h4>Asignaturas del alumno</h4>
+			    	<table id="tabla" class="table table-hover w-75">
+			    		<tr><th>Asignatura</th><th>Nota</th></tr>    		
+			    	</table>
+		    		<div id="notaMedia"></div>
+	   			</div>	   			
+		    </div>		    
+		    <div id="info" class="w-50" style="float:left;">
+		    	<div class="w-100">
+			    	<p id="inf"><small>Pulse en una asignatura para mostrar su informaci&oacute;n.</small></p>
+			    	<div id="titulo"></div>
+			    	<div id="infoAsig" style="margin-left:20px;"></div>
+			    	<div id="profesores"></div>
+			    	<div id="infoPro" style="margin-left:20px;"></div>
+		    	</div>		    	
+		    </div>
+	   	</div>
+	    
+    </div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang= "es-es">
+	<head>
+		<meta charset="UTF-8">
+		<title>Inicio de sesi&oacute;n</title>
+		
+	</head>
+	<body style="background:linear-gradient(to right, #0bd6ab, #d6f9e4); font-family:helvetica; text-align: center; ">  
+		<div><h1>Paso previo a poder interactuar con Notas OnLine...</h1></div>
+		<div style="margin-left:20%; margin-right:20%; border-radius: 40px; border-color: #d3efe9; border-style:solid;">
+			<div id="log" style="text-align:center; " >
+            <form action="j_security_check" method="POST">
+                <h3 style="margin-bottom: 15px;">Iniciar sesi&oacute;n:</h3>
+                <p><b>Usuario:</b></p>       
+                <p><input class="form-control" id="dni_alu" type="text" name="j_username"  value="" placeholder="Introduzca su dni" /></p>     
+                <p><b>Contrase&ntilde;a:</b> </p> 	        	        
+                <p><input class="form-control" id="password_alu" type="password" name="j_password"  value="" placeholder="Introduzca su contraseña"/></p>  
+                <div id="o_alu" class="text-danger"></div>            
+                <input class="btn btn-primary btn-lg" value="Login" type="submit" style="margin-bottom: 15px;"/>  
+                <div style="color:red;"><p>Por favor, introduzca un usuario y contrase&ntilde;a v&aacute;lidos.</p></div>        
+          	</form>
+       		</div>     
+		</div>
+		
+		
+         
+	</body>
+</html>
